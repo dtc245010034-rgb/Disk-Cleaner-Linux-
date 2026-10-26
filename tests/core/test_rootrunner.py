@@ -1,5 +1,8 @@
+import os
 import sys
+from types import SimpleNamespace
 
+from disk_cleaner.core import rootrunner
 from disk_cleaner.core.rootrunner import RootRunner
 
 
@@ -45,3 +48,34 @@ def test_garbage_output_becomes_error(tmp_path):
 
 def test_empty_ops_returns_empty(tmp_path):
     assert RootRunner(helper=_helper(tmp_path, "pass\n"), prefix=(sys.executable,)).run([]) == []
+
+
+def test_group_writable_helper_accepted_when_group_is_users_private_group(tmp_path, monkeypatch):
+    # umask 002 (Ubuntu mặc định) tạo file 0664: không được làm hỏng mọi thao tác root
+    h = _helper(tmp_path, "import json\nprint(json.dumps([{'ok': True}]))\n")
+    h.chmod(0o664)
+    r = RootRunner(helper=h, prefix=(sys.executable,))
+    monkeypatch.setattr(rootrunner, "_group_is_private", lambda gid: False)
+    refused = r.run([["apt-clean"]])
+    assert refused[0]["ok"] is False and "quyền ghi" in refused[0]["error"]
+    monkeypatch.setattr(rootrunner, "_group_is_private", lambda gid: True)
+    assert r.run([["apt-clean"]]) == [{"ok": True}]
+
+
+def test_others_writable_is_refused_even_with_private_group(tmp_path, monkeypatch):
+    h = _helper(tmp_path, "print('[]')\n")
+    h.chmod(0o666)
+    monkeypatch.setattr(rootrunner, "_group_is_private", lambda gid: True)
+    out = RootRunner(helper=h, prefix=(sys.executable,)).run([["apt-clean"]])
+    assert out[0]["ok"] is False and "quyền ghi" in out[0]["error"]
+
+
+def test_group_is_private_rules(monkeypatch):
+    me = rootrunner.pwd.getpwuid(os.getuid()).pw_name
+    monkeypatch.setattr(rootrunner.grp, "getgrgid", lambda gid: SimpleNamespace(gr_mem=[]))
+    assert rootrunner._group_is_private(os.getgid()) is True
+    monkeypatch.setattr(rootrunner.grp, "getgrgid", lambda gid: SimpleNamespace(gr_mem=[me]))
+    assert rootrunner._group_is_private(os.getgid()) is True
+    monkeypatch.setattr(rootrunner.grp, "getgrgid", lambda gid: SimpleNamespace(gr_mem=["someone-else"]))
+    assert rootrunner._group_is_private(os.getgid()) is False
+    assert rootrunner._group_is_private(os.getgid() + 12345) is False

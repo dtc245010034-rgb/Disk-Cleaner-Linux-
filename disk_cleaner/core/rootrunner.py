@@ -1,13 +1,28 @@
 from __future__ import annotations
 
+import grp
 import json
 import os
+import pwd
 from pathlib import Path
 
 from .fsutil import run
 
 HELPER = Path(__file__).resolve().parent.parent / "root_helper.py"
 DEFAULT_PREFIX = ("pkexec", "/usr/bin/python3")
+
+
+def _group_is_private(gid: int) -> bool:
+    """True nếu gid là nhóm riêng của chính người dùng (nhóm chính, không có thành viên khác),
+    như `dog:dog` trên Ubuntu. Quyền ghi của nhóm đó tương đương quyền ghi của chủ file."""
+    if gid != os.getgid():
+        return False
+    try:
+        members = grp.getgrgid(gid).gr_mem
+    except KeyError:
+        return False
+    me = pwd.getpwuid(os.getuid()).pw_name
+    return all(m == me for m in members)
 
 
 class RootRunner:
@@ -19,8 +34,10 @@ class RootRunner:
 
     def _check_helper(self) -> None:
         st = self.helper.stat()
-        if st.st_mode & 0o022:
-            raise RuntimeError("root_helper.py có quyền ghi cho nhóm/người khác, từ chối chạy")
+        if st.st_mode & 0o002:
+            raise RuntimeError("root_helper.py có quyền ghi cho người khác, từ chối chạy")
+        if st.st_mode & 0o020 and not _group_is_private(st.st_gid):
+            raise RuntimeError("root_helper.py có quyền ghi cho một nhóm dùng chung, từ chối chạy")
         if st.st_uid not in (0, os.getuid()):
             raise RuntimeError("root_helper.py không thuộc về bạn hoặc root, từ chối chạy")
 
