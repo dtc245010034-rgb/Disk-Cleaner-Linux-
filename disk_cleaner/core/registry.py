@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .bigfiles import BigDirsCategory
 from .categories import ClaudeOldVersions, fs_categories
 from .models import Category
 from .syscats import AptCache, JournalLogs, OldKernels, OldSnaps
@@ -23,4 +24,5 @@ def build_categories(home=None) -> list[Category]:
         OldSnaps(),
         DockerUnusedImages(),
         DockerVolumes(),
+        BigDirsCategory(home),
     ]

@@ -9,3 +9,4 @@ def test_registry_ids_unique_and_complete(tmp_path):
         assert c.title and c.icon and c.risk
     assert {"trash", "chrome-cache", "npm-cache", "apt-cache", "journal", "kernels",
             "snaps", "docker-volumes"} <= set(ids)
+    assert "big-dirs" in set(ids)
