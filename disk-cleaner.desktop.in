@@ -6,4 +6,4 @@ Exec=python3 -m disk_cleaner
 Path=@DIR@
 Icon=drive-harddisk
 Terminal=false
-Categories=System;Utility;
+Categories=System;
