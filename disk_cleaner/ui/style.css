@@ -1,0 +1,26 @@
+.card {
+  background-color: alpha(@theme_fg_color, 0.04);
+  border: 1px solid alpha(@theme_fg_color, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 4px 12px;
+}
+.card-title { font-weight: 600; }
+.dim { opacity: 0.65; font-size: 0.9em; }
+.size-label { font-weight: 700; }
+.item-row { padding: 2px 0 2px 28px; }
+
+.risk-badge { border-radius: 999px; padding: 1px 9px; font-size: 0.85em; font-weight: 600; }
+.risk-safe { background-color: alpha(#2ec27e, 0.18); color: #26a269; }
+.risk-reloadable { background-color: alpha(#e5a50a, 0.22); color: #b07d00; }
+.risk-dangerous { background-color: alpha(#e01b24, 0.18); color: #c01c28; }
+
+.usage-box { padding: 10px 14px; border-bottom: 1px solid alpha(@theme_fg_color, 0.12); }
+progressbar.usage-bar trough { min-height: 10px; border-radius: 6px; }
+progressbar.usage-bar progress { min-height: 10px; border-radius: 6px; background-image: none; }
+progressbar.usage-ok progress { background-color: #2ec27e; }
+progressbar.usage-warn progress { background-color: #e5a50a; }
+progressbar.usage-crit progress { background-color: #e01b24; }
+
+.footer { padding: 8px 12px; border-top: 1px solid alpha(@theme_fg_color, 0.12); }
+.error-text { color: #c01c28; }
