@@ -10,6 +10,7 @@ from gi.repository import Gdk, Gtk  # noqa: E402
 
 from .bigfiles_tab import BigFilesTab  # noqa: E402
 from .cleanup_tab import CleanupTab  # noqa: E402
+from .diskmap_tab import DiskMapTab  # noqa: E402
 from .system_tab import SystemTab  # noqa: E402
 from .widgets import UsageBar, icon  # noqa: E402
 
@@ -32,6 +33,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.notebook = Gtk.Notebook()
         root.pack_start(self.notebook, True, True, 0)
         self.add_tab(CleanupTab(on_changed=self.usage.refresh), "Dọn dẹp", "edit-clear-all-symbolic")
+        self.add_tab(DiskMapTab(), "Khám phá đĩa", "drive-harddisk-symbolic")
         self.add_tab(BigFilesTab(on_changed=self.usage.refresh), "File lớn", "system-search-symbolic")
         self.add_tab(SystemTab(), "Hệ thống", "computer-symbolic")
 
