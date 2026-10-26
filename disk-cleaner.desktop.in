@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Disk Cleaner
+Comment=Dọn dẹp và tối ưu dung lượng ổ đĩa
+Exec=python3 -m disk_cleaner
+Path=@DIR@
+Icon=drive-harddisk
+Terminal=false
+Categories=System;Utility;

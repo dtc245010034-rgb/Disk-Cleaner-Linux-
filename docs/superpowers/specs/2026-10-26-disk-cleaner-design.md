@@ -24,7 +24,7 @@ dọn trên máy khác, hỗ trợ distro khác ngoài Ubuntu/XFCE, đóng gói 
 | Quyền root | Chạy bằng quyền user; thao tác cần root đi qua `pkexec` khi bấm Dọn |
 | Chức năng | 4 tab: Dọn dẹp, Khám phá đĩa, File lớn, Hệ thống |
 | Kiến trúc | Tách `core/` (không GUI) và `ui/` (GTK3); script `root_helper.py` cho thao tác root |
-| Icon | Adwaita symbolic icons + nhãn rủi ro bằng CSS; có icon SVG dự phòng |
+| Icon | Adwaita symbolic icons + nhãn rủi ro bằng CSS; chuỗi icon dự phòng trong `widgets.icon()` |
 | Ngôn ngữ giao diện | Tiếng Việt |
 | Vị trí dự án | `~/disk-cleaner/` |
 
@@ -35,7 +35,13 @@ dọn trên máy khác, hỗ trợ distro khác ngoài Ubuntu/XFCE, đóng gói 
 ├── disk_cleaner/
 │   ├── __main__.py          # điểm vào: python3 -m disk_cleaner
 │   ├── core/
-│   │   ├── categories.py    # định nghĩa nhóm dọn (id, tên, icon, risk, needs_root, scan(), clean())
+│   │   ├── models.py        # Risk, Item, CleanResult, Category
+│   │   ├── fsutil.py        # dir_size, human, run, free_bytes, remove_path, remove_contents
+│   │   ├── categories.py    # nhóm xoá thư mục (Chrome, Trash, VS Code...) và Claude Code cũ
+│   │   ├── tools.py         # npm/pip và Docker (image dangling, image không dùng, volume)
+│   │   ├── syscats.py       # APT, journal, kernel cũ, snap cũ (cần root)
+│   │   ├── registry.py      # build_categories(): thứ tự hiển thị từ an toàn tới rủi ro
+│   │   ├── rootrunner.py    # RootRunner: gọi root_helper.py bằng pkexec
 │   │   ├── scanner.py       # chạy scan() các nhóm, trả ScanResult (không xoá gì)
 │   │   ├── cleaner.py       # chạy clean() có dry_run, trả CleanResult (MB thu hồi, lỗi)
 │   │   ├── safety.py        # whitelist/blacklist đường dẫn, mọi thao tác xoá phải qua đây
@@ -51,7 +57,6 @@ dọn trên máy khác, hỗ trợ distro khác ngoài Ubuntu/XFCE, đóng gói 
 │   │   ├── system_tab.py
 │   │   ├── widgets.py       # CategoryRow, RiskBadge, UsageBar, ConfirmDialog
 │   │   ├── style.css        # pill màu, thẻ, thanh dung lượng, theme sáng/tối
-│   │   └── icons/           # SVG dự phòng
 │   └── root_helper.py       # chạy bằng pkexec; chỉ nhận tên thao tác cố định
 ├── tests/
 ├── disk-cleaner.desktop
@@ -122,7 +127,8 @@ Khi một nhóm `available()` trả `False` (không có docker/snap) thì ẩn n
 
 ## 7. Thao tác root (`root_helper.py`)
 
-- Chạy `pkexec python3 /đường/dẫn/root_helper.py <op> [args]`; một lần xác thực cho cả lượt dọn
+- Chạy `pkexec /usr/bin/python3 /đường/dẫn/root_helper.py '<json>'` với `<json>` là danh sách thao tác
+  `[[op, arg...], ...]`; một lần xác thực cho cả lượt dọn
   (UI gom các thao tác root thành một lần gọi nhiều op tuần tự).
 - Chỉ nhận op trong danh sách cố định: `apt-clean`, `journal-vacuum <size>`,
   `kernel-purge <pkg>...`, `snap-remove <name> <rev>`.
@@ -151,7 +157,7 @@ Khi một nhóm `available()` trả `False` (không có docker/snap) thì ẩn n
   app khởi động cùng máy; tự làm mới mỗi 2 giây khi tab đang mở. Chỉ xem.
 - Quét/dọn chạy luồng nền (GLib idle để cập nhật UI), kết quả hiện dần theo nhóm.
 
-**Icon** (Adwaita symbolic, kèm SVG dự phòng trong `ui/icons/`)
+**Icon** (Adwaita symbolic; `widgets.icon()` tự dự phòng tên không symbolic rồi `image-missing`)
 
 | Vị trí | Icon |
 |---|---|
