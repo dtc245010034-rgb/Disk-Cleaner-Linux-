@@ -104,7 +104,14 @@ class ClaudeOldVersions(Category):
         h = self.home
         groups = [h / ".local/share/claude/versions", h / ".config/Claude/claude-code"]
         groups += sorted(h.glob("snap/code/*/.local/share/claude/versions"))
-        return [g for g in groups if g.is_dir()]
+        seen: set[str] = set()
+        unique = []
+        for g in groups:  # ~/snap/code/current là symlink tới revision: chỉ giữ một đường dẫn thật
+            real = os.path.realpath(g)
+            if g.is_dir() and real not in seen:
+                seen.add(real)
+                unique.append(g)
+        return unique
 
     def _roots(self) -> list[Path]:
         return self._groups() + [self.home / ".local/bin"]

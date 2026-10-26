@@ -85,6 +85,17 @@ def test_claude_old_versions_keeps_newest_and_running(tmp_path):
     assert (g / "2.1.9").exists() and (g / "2.1.10").exists()
 
 
+def test_claude_old_versions_not_duplicated_via_snap_current_symlink(tmp_path):
+    rev = tmp_path / "snap/code/267/.local/share/claude/versions"
+    rev.mkdir(parents=True)
+    for v in ("2.1.1", "2.1.2"):
+        (rev / v).write_bytes(b"x" * 5000)
+    (tmp_path / "snap/code/current").symlink_to("267")
+    c = cats.ClaudeOldVersions(tmp_path, running_exes=lambda: set())
+    items = c.scan()
+    assert len(items) == 1 and Path(items[0].path).name == "2.1.1"
+
+
 def test_claude_old_versions_rechecks_running_at_clean_time(tmp_path):
     g = tmp_path / ".local/share/claude/versions"
     g.mkdir(parents=True)
